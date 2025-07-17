@@ -23,7 +23,15 @@ const requireAdmin = (req, res, next) => {
 };
 
 // Middleware gabungan: authenticate + requireAdmin
-const requireAdminAuth = [authenticate, requireAdmin];
+const requireAdminAuth = (req, res, next) => {
+  // Jalankan authenticate
+  authenticate(req, res, (err) => {
+    if (err) return next(err);
+
+    // Baru jalankan requireAdmin
+    requireAdmin(req, res, next);
+  });
+};
 
 module.exports = {
   requireAdmin,

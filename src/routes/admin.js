@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { requireAdminAuth } = require("../Middleware/adminAuth");
+const { requireAdminAuth } = require("../middleware/adminAuth");
 const { addMember } = require("../handlers/admin/addMember");
 const { getAllMembers } = require("../handlers/admin/getAllMembers");
 const {

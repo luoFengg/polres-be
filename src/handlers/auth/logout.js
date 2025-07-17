@@ -1,4 +1,4 @@
-const { addToBlacklist } = require("../../Middleware/auth");
+const { addToBlacklist } = require("../../middleware/auth");
 
 const logout = async (req, res) => {
   try {
