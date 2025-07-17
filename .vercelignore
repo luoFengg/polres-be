@@ -18,6 +18,9 @@ README.md
 
 # Build artifacts
 .next
+
+# DON'T ignore Prisma client - it's needed for production
+# src/generated/prisma
 dist
 build
 
