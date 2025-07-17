@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Anggota {
+  id                            String                @id @default(cuid())
+  nrp                           String                @unique
+  nama                          String
+  jabatan                       String
+  password                      String
+  role                          Role                  @default(anggota)
+  createdAt                     DateTime              @default(now())
+  updatedAt                     DateTime              @updatedAt
+  piutang                       Piutang[]
+  processedTransactions         PiutangTransaction[]  @relation("ProcessedBy")
+  simpanan                      Simpanan?
+  updatedSimpanan               Simpanan[]            @relation("SimpananUpdatedBy")
+  simpananTransactions          SimpananTransaction[] @relation("SimpananTransactions")
+  processedSimpananTransactions SimpananTransaction[] @relation("SimpananProcessedBy")
+}
+
+model Simpanan {
+  anggotaId            String                @id
+  simpananPokok        Decimal               @default(0)
+  simpananWajib        Decimal               @default(0)
+  simpananSukarela     Decimal               @default(0)
+  tabunganHariRaya     Decimal               @default(0)
+  updatedAt            DateTime              @updatedAt
+  createdAt            DateTime              @default(now())
+  lastUpdatedBy        String?
+  anggota              Anggota               @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  updatedBy            Anggota?              @relation("SimpananUpdatedBy", fields: [lastUpdatedBy], references: [id])
+  simpananTransactions SimpananTransaction[] @relation("SimpananTransactions")
+}
+
+model TokoKategori {
+  id           String       @id @default(cuid())
+  namaKategori String       @unique
+  produk       TokoProduk[]
+}
+
+model TokoProduk {
+  id         String        @id @default(cuid())
+  namaProduk String
+  fotoProduk String? // URL atau path ke foto produk
+  harga      Decimal       @default(0)
+  kategoriId String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  deskripsi  String?
+  kategori   TokoKategori? @relation(fields: [kategoriId], references: [id])
+}
+
+model Piutang {
+  id            String               @id @default(cuid())
+  anggotaId     String
+  jenis         String
+  besarPinjaman Decimal              @default(0)
+  totalPiutang  Decimal              @default(0)
+  biayaAngsuran Decimal              @default(0)
+  sisaPiutang   Decimal              @default(0)
+  sisaAngsuran  Int                  @default(0)
+  totalAngsuran Int                  @default(0)
+  status        String               @default("active")
+  completedAt   DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  anggota       Anggota              @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  transactions  PiutangTransaction[]
+}
+
+model PiutangTransaction {
+  id          String   @id @default(cuid())
+  piutangId   String
+  type        String
+  amount      Decimal
+  description String?
+  processedBy String?
+  createdAt   DateTime @default(now())
+  piutang     Piutang  @relation(fields: [piutangId], references: [id], onDelete: Cascade)
+  processor   Anggota? @relation("ProcessedBy", fields: [processedBy], references: [id])
+}
+
+model SimpananTransaction {
+  id                String   @id @default(cuid())
+  anggotaId         String
+  type              String
+  category          String
+  amount            Decimal
+  balanceBefore     Decimal
+  balanceAfter      Decimal
+  description       String?
+  processedBy       String?
+  isSystemGenerated Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  anggota           Anggota  @relation("SimpananTransactions", fields: [anggotaId], references: [id], onDelete: Cascade, map: "SimpananTransaction_anggota_fkey")
+  processor         Anggota? @relation("SimpananProcessedBy", fields: [processedBy], references: [id], map: "SimpananTransaction_processor_fkey")
+  simpanan          Simpanan @relation("SimpananTransactions", fields: [anggotaId], references: [anggotaId], onDelete: Cascade, map: "SimpananTransaction_simpanan_fkey")
+
+  @@index([anggotaId, createdAt])
+  @@index([category, type])
+}
+
+enum Role {
+  admin
+  adminKoperasi
+  anggota
+}
